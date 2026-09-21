@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  sdoc-pipeline:
+    build: .
+    container_name: sdoc-pipeline
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

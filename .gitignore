@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.local
+
+# Node
+node_modules/
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test/cache
+.pytest_cache/
+.coverage
+
+# Generated files
+dist/
+build/
+
+# Secrets
+*.pem
+*.key
+
+# Local data/output
+outputs/
+results/
