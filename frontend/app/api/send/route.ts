@@ -1,7 +1,6 @@
 // app/api/send/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";
-import { randomUUID } from "crypto";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export const runtime = "nodejs";        // crypto.randomUUID + FormData need node
 export const maxDuration = 60;          // for Vercel — bump if extraction is slow
