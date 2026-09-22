@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
-from fastapi import FastAPI, File, Form, UploadFile
+from fastapi import Depends, FastAPI, File, Form, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -16,6 +16,15 @@ from .config import INBOX_DIR, ATTACHMENTS_DIR
 
 
 app = FastAPI(title="SDOC AI Pipeline", version="1.1.0")
+
+from fastapi import FastAPI, File, Form, UploadFile, Header, HTTPException
+import os
+
+INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY", "")
+
+def verify_internal_key(x_internal_key: str = Header(default="")):
+    if not INTERNAL_API_KEY or x_internal_key != INTERNAL_API_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 # ── CORS ────────────────────────────────────────────────────
 # In dev, allow everything. In prod, restrict to your Next.js origin.
@@ -47,6 +56,7 @@ async def process_endpoint(
     body: str = Form(""),
     received_at: Optional[str] = Form(None),
     files: List[UploadFile] = File(default=[]),
+    _auth: None = Depends(verify_internal_key),
 ):
     email_id = next_email_id()
 
@@ -80,7 +90,11 @@ class StorageProcessRequest(BaseModel):
 
 
 @app.post("/api/process-from-storage")
-async def process_from_storage(req: StorageProcessRequest):
+@app.post("/api/process-from-storage")
+async def process_from_storage(
+    req: StorageProcessRequest,
+    _auth: None = Depends(verify_internal_key),
+):
     """
     Frontend already uploaded files to the `attachments` bucket.
     We download each by its storage path, run the pipeline,

@@ -6,11 +6,15 @@ import type { EmailCategory, EmailRecord } from "@/lib/types";
 export default function ActionPanel({ email }: { email: EmailRecord }) {
   const c = email.classification;
 
-  // BL_COMPARISON + NEEDS_REVIEW → amber escalation panel
   if (c.category === "BL_COMPARISON" && c.status === "NEEDS_REVIEW") {
     const reason = c.review_reason
       ? REVIEW_REASON_LABELS[c.review_reason]
       : "Requires a human decision";
+
+    // Whole document missing → nothing to compare, review page only.
+    // Field(s) missing but both docs present → comparison table still
+    // renders (with the missing cells flagged), so offer both paths.
+    const canViewComparison = c.review_reason === "missing_value";
 
     return (
       <section className="rounded-sm border border-amber-200 bg-amber-50/50 p-5">
@@ -31,13 +35,25 @@ export default function ActionPanel({ email }: { email: EmailRecord }) {
           </div>
         </div>
 
-        <Link
-          href={`/reviews/${email.email_id}`}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-sm bg-amber-900 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-amber-800"
-        >
-          Review case
-          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </Link>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Link
+            href={`/reviews/${email.email_id}`}
+            className="inline-flex items-center gap-1.5 rounded-sm bg-amber-900 px-3.5 py-2 text-xs font-medium text-white transition hover:bg-amber-800"
+          >
+            Review case
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+
+          {canViewComparison ? (
+            <Link
+              href={`/emails/${email.email_id}/comparison`}
+              className="inline-flex items-center gap-1.5 rounded-sm border border-amber-300 bg-white px-3.5 py-2 text-xs font-medium text-amber-900 transition hover:bg-amber-50"
+            >
+              View comparison
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          ) : null}
+        </div>
       </section>
     );
   }
@@ -107,7 +123,6 @@ function categoryHeading(category: EmailCategory): string {
     case "SPAM":
       return "Flagged as spam";
     case "BL_COMPARISON":
-      // Handled above; kept for exhaustiveness.
       return "Document verification";
   }
 }

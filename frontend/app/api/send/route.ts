@@ -54,20 +54,17 @@ export async function POST(req: NextRequest) {
     }
 
     // 2) Call the Python pipeline
-    const pythonRes = await fetch(
-      `${process.env.PYTHON_API_URL}/api/process-from-storage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from_address,
-          subject,
-          body,
-          received_at,
-          attachments: uploaded,
-        }),
-      }
-    );
+const pythonRes = await fetch(
+  `${process.env.PYTHON_API_URL}/api/process-from-storage`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Internal-Key": process.env.PYTHON_INTERNAL_KEY!,
+    },
+    body: JSON.stringify({ from_address, subject, body, received_at, attachments: uploaded }),
+  }
+);
 
     const result = await pythonRes.json();
 

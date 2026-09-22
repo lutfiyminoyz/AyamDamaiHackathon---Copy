@@ -89,10 +89,22 @@ export async function getDocumentComparison(
     .maybeSingle();
 
   if (error) throw error;
+  if (!data) return null;
 
-  return data ? (data as DocumentComparisonRow) : null;
+  const row = data as DocumentComparisonRow;
+
+  return {
+    ...row,
+    si_fields:
+      typeof row.si_fields === "string"
+        ? JSON.parse(row.si_fields)
+        : row.si_fields,
+    bl_fields:
+      typeof row.bl_fields === "string"
+        ? JSON.parse(row.bl_fields)
+        : row.bl_fields,
+  };
 }
-
 export function getAttachmentUrl(filename: string): string {
   const storagePath = filename.startsWith("attachments/")
     ? filename.slice("attachments/".length)

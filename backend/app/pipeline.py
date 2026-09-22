@@ -13,13 +13,13 @@ from .comparator import compare_documents
 from .db import upsert_email, upsert_comparison
 
 
-# Valid values for the `review_reason` enum in Supabase.
-# Keep in sync with:  select enumlabel from pg_enum ...
+# Valid values for the `review_reason` enum — matches lib/types.ts
+# ReviewReason on the frontend exactly. Keep these two in sync.
 VALID_REVIEW_REASONS = {
-    "MISSING_SI",
-    "MISSING_BL",
-    "INVALID_FORMAT",
-    "MISSING_DATA",
+    "missing_attachment",
+    "missing_value",
+    "wrong_doc_type",
+    "unreadable",
     None,
 }
 
@@ -170,11 +170,9 @@ def process_email(
                 f"what document_type it returned for each file."
             )
 
-        # Pick review_reason from the enum
-        if si_doc is None:
-            reason = "MISSING_SI"
-        elif bl_doc is None:
-            reason = "MISSING_BL"
+        # Pick review_reason from the enum — matches lib/types.ts ReviewReason
+        if si_doc is None or bl_doc is None:
+            reason = "missing_attachment"
         else:
             reason = None
 
@@ -194,7 +192,10 @@ def process_email(
                 "si_file":       si_file,
                 "bl_file":       bl_file,
                 "status":        cmp_result["status"],
-                "review_reason": None,
+                # Propagate missing_value when the comparator flagged
+                # fields it couldn't verify (previously hardcoded to None,
+                # which silently dropped this information).
+                "review_reason": "missing_value" if cmp_result["review_fields"] else None,
                 "defect_fields": cmp_result["defect_fields"],
                 "review_fields": cmp_result["review_fields"],
                 "si_fields":     si_norm,

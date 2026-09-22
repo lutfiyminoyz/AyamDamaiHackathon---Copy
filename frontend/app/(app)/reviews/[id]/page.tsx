@@ -7,6 +7,7 @@ import DocumentViewer from "@/components/email/DocumentViewer";
 type PageProps = {
   params: Promise<{ id: string }>;
 };
+
 const reviewReasonLabels: Record<string, string> = {
   unreadable: "Unreadable attachment",
   missing_attachment: "Missing attachment",
@@ -14,10 +15,13 @@ const reviewReasonLabels: Record<string, string> = {
   wrong_doc_type: "Wrong document type",
 };
 
-const getReviewReasonLabel = (reason: string | null) =>
+const getReviewReasonLabel = (reason: string | null | undefined) =>
   reason
     ? reviewReasonLabels[reason] ?? reason.replace(/_/g, " ")
     : "Document-level review";
+
+const getFieldLabel = (field: string) =>
+  field.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
 export default async function ReviewPage({ params }: PageProps) {
   const { id } = await params;
@@ -28,6 +32,9 @@ export default async function ReviewPage({ params }: PageProps) {
   ]);
 
   if (!email || !comparison) notFound();
+
+  // Defensive: treat missing/null as an empty list rather than crashing.
+  const reviewFields = comparison.review_fields ?? [];
 
   return (
     <div className="space-y-8">
@@ -57,7 +64,8 @@ export default async function ReviewPage({ params }: PageProps) {
             </h2>
 
             <p className="mt-1 text-xs text-amber-800">
-                {getReviewReasonLabel(comparison.review_reason)}            </p>
+              {getReviewReasonLabel(comparison.review_reason)}
+            </p>
           </div>
         </div>
       </section>
@@ -94,30 +102,25 @@ export default async function ReviewPage({ params }: PageProps) {
           <div className="grid grid-cols-[140px_1fr] gap-4 px-5 py-4 text-xs">
             <dt className="text-slate-500">Review fields</dt>
             <dd className="font-mono text-slate-700">
-                {comparison.review_fields.length > 0
-                ? comparison.review_fields
-                    .map((field) =>
-                        field
-                        .replace(/_/g, " ")
-                        .replace(/\b\w/g, (char) => char.toUpperCase())
-                    )
-                    .join(", ")
+              {reviewFields.length > 0
+                ? reviewFields.map(getFieldLabel).join(", ")
                 : "Document-level review"}
             </dd>
           </div>
         </dl>
       </section>
+
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <DocumentViewer
-            filename={comparison.si_file}
-            title="Shipping Instruction (SI)"
+          filename={comparison.si_file}
+          title="Shipping Instruction (SI)"
         />
 
         <DocumentViewer
-            filename={comparison.bl_file}
-            title="Bill of Lading (BL)"
+          filename={comparison.bl_file}
+          title="Bill of Lading (BL)"
         />
-        </div>
+      </div>
 
       <section className="rounded-sm border border-slate-200 bg-white p-5">
         <h2 className="text-sm font-semibold text-slate-900">
